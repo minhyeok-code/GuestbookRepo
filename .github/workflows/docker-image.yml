@@ -47,7 +47,7 @@ jobs:
           script: |
             sudo yum install git -y
             rm -rf ~/guestbook
-            git clone https://github.com/minhyeok-code/guestbook.git ~/guestbook
+            git clone https://minhyeok-code:${{ secrets.PAT_KEY }}@github.com/minhyeok-code/guestbook.git
             cd ~/guestbook
             docker pull choiminhyeok/backend-app:latest
             docker pull choiminhyeok/frontend-app:latest
