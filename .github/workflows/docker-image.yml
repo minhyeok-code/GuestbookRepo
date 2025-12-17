@@ -29,3 +29,19 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: yourname/your-app:latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: yourname/frontend-app:latest
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: yourname/backend-app:latest
