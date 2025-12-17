@@ -30,7 +30,7 @@ jobs:
           push: true
           tags: choiminhyeok/frontend-app:latest
           build-args: |
-            NEXT_PUBLIC_API_URL=http://backend:8080
+            NEXT_PUBLIC_API_URL=http://${{ secrets.EC2_HOST }}:8080
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
