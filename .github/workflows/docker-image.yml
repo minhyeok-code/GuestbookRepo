@@ -38,15 +38,15 @@ jobs:
           push: true
           tags: choiminhyeok/backend-app:latest
           
-        - name: Deploy on EC2
-            uses: appleboy/ssh-action@v1.0.0
-            with:
-              host: ${{ secrets.EC2_HOST }}
-              username: ec2-user
-              key: ${{ secrets.EC2_KEY }}
-              script: |
-                docker pull yourname/backend-app:latest
-                docker pull yourname/frontend-app:latest
-                cd ~/guestbook
-                docker compose down
-                docker compose up -d
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            docker pull yourname/backend-app:latest
+            docker pull yourname/frontend-app:latest
+            cd ~/guestbook
+            docker compose down
+            docker compose up -d
