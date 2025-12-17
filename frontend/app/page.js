@@ -11,7 +11,7 @@ export default function Home() {
     useEffect(() => {
         const fetchGuestbooks = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://3.26.27.206:8080';
                 const response = await fetch(`${apiUrl}/api/book`);
                 if (!response) throw new Error("데이터 로딩 실패");
                 const data = await response.json();
