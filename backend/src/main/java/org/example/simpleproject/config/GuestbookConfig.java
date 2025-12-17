@@ -10,7 +10,7 @@ public class GuestbookConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")  // 모든 경로
-                .allowedOrigins("http://localhost:3000")  // 프론트 주소
+                .allowedOrigins("http://3.26.27.206:3000")  // 프론트 주소
                 .allowedMethods("GET", "POST")
                 .allowCredentials(true);
     }
