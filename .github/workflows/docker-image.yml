@@ -45,9 +45,12 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_KEY }}
           script: |
+            sudo yum install git -y
+            rm -rf ~/guestbook
+            git clone https://github.com/minhyeok-code/guestbook.git ~/guestbook
+            cd ~/guestbook
             docker pull choiminhyeok/backend-app:latest
             docker pull choiminhyeok/frontend-app:latest
-            cd ~/guestbook
             git pull origin main
             docker compose down
             docker compose up -d
