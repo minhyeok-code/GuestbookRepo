@@ -111,3 +111,111 @@ jobs:
 tags :  tags: yourname/backend-app:latest 에서의  username은 docker hub에서 입력된 name을 작성해야한다.
 secrets에서 받아온 토큰 pw에 name과 pw가 존재.
 build.steps.name과 일치해야한다는 뜻.
+
+
+======== 지속 적인 build error
+현재 ec2에 app을 복사하는 중인데 복사가 진행중에 commit을 하면 복사중인 dir은 commit이 되지 않음..
+그래서 actions에서 build할 때 dockerfile을 찾지 못하고 에러가 나는 것...
+
+
+======= docker hub auth
+Error: buildx failed with: ERROR: failed to build: failed to solve: failed to fetch oauth token: unexpected status from GET request to https://auth.docker.io/token?scope=repository%3A***%2Ffrontend-app%3Apull%2Cpush&service=registry.docker.io: 401 Unauthorized: access token has insufficient scopes
+
+failed to fetch oauth token: 401 Unauthorized: access token has insufficient scopes
+
+해당 문제는 docker hub에서 토큰을 받아올 때 read only로 받아와서 그런 것
+권한을 read&write로 해야함 !!
+
+======= github actions deploy.yml 들여쓰기
+들여쓰기는 tap으로 XXXX
+띄어쓰기 2번을 탭 1번의 공백으로 생각하고 사용.
+tap으로 하면 오류가 남남
+
+==========github actions deploy.yml  pull
+
+docker-compose에 
+frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+
+를 통한 front와의 연결을 작성하지 않고 actions를 build하고 ec2에서 컨테이너를 확인했을 때 컨테이너가 back,db만 올라옴
+
+이를 cat docker-compose.yml 을 입력하여 파일을 열어보면 (ec2) 이전에 작성한 docker-compose 파일이 올라와 있고 수정사항이 반영이 안된 것을 확인할 수 있었음
+
+[ec2-user@ip-172-31-23-63 ~]$ cat docker-compose.yml
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: guestuser
+      MYSQL_DATABASE: guestbook
+      MYSQL_PASSWORD: guest1234
+    ports:
+      - "3308:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/guestbook
+      SPRING_DATASOURCE_USERNAME: guestuser
+      SPRING_DATASOURCE_PASSWORD: guest1234
+
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+
+  이것은 actions 에 deploy.yml 파일에 git pull 명령어가 없어서 그런데,
+
+        - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            docker pull choiminhyeok/backend-app:latest
+            docker pull choiminhyeok/frontend-app:latest
+            cd ~/guestbook
+            git pull origin main
+            docker compose down
+            docker compose up -d
+
+    ec2와 연동하는 명령어에 script에서 pull 명령어를 추가하면 문제를 해결할 수 있음.
+
+
+
+    ======== ec2 git push 워크플로 
+      script: |
+      sudo yum install git -y  
+      rm -rf ~/guestbook       
+      git clone https://github.com/너의-깃허브-유저/guestbook.git ~/guestbook
+      cd ~/guestbook
+      docker pull choiminhyeok/backend-app:latest
+      docker pull choiminhyeok/frontend-app:latest
+      docker compose down
+      docker compose up -d
+
+build시마다 기존 app을 삭제하고 pull을 할것인가 pull만 하여 덮어쓸 것인가
+
+이건 추적불가능한 캐시나 데이터들이 얼마나 만들어지냐에 따라 다르다..

@@ -297,3 +297,30 @@ function AddGuestBook({onAdd}){
 2. 백엔드: DB에서 id 자동 생성 후 저장
 3. 백엔드: 저장된 엔티티 (id 포함) 응답으로 반환
 4. 프론트엔드: 응답받은 데이터로 상태 업데이트
+
+
+=======Dockerfile(backend)
+
+
+
+FROM eclipse-temurin:21-jdk-jammy
+COPY build/libs/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+
+현재는 jar파일을 실행하는 코드가 짜여져 있다
+
+git actions에서 app을 실행하고자 한다면 build dir가 같이 push 되어있거나 build를 하고 실행하는 코드가 짜여져 있어야 한다.
+ 이 경우에 build파일을 push하는 것보다 dockerfile에 코드를 만들어 놓는게 좋은데, 그 이유는 jar파일을 필요시에 자동으로 build를 해주기 때문이다.
+ build폴터를 push 한다면 코드만 push해서는 자동화가 이루어지지 않고 build까지 한 후 push해야 ci가 구축된다.
+
+ # 1단계: 빌드용 이미지
+FROM gradle:8.5-jdk21 AS builder
+WORKDIR /app
+COPY . .
+RUN gradle build -x test
+
+# 2단계: 실행용 이미지
+FROM eclipse-temurin:21-jdk-jammy
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
