@@ -24,7 +24,7 @@ function AddGuestBook({ onAdd }) {
 
         setIsSubmitting(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://3.26.27.206:8080';
             const response = await fetch(`${apiUrl}/api/book`, {
                 method: 'POST',
                 headers: {

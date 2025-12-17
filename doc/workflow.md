@@ -2,22 +2,75 @@
 
 ## 🔍 발견된 문제점
 
-### 1. ❌ Spring Boot 버전 오류 (핵심 원인)
+### 1. ❌ 존재하지 않는 Spring Boot Starter 의존성 (핵심 원인)
 
 **파일:** `backend/build.gradle`
 
 ```gradle
-// 현재 설정 - 문제!
-id 'org.springframework.boot' version '4.0.0'
+// 문제가 있던 의존성들
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'        // ❌ 존재하지 않음!
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'  // ❌ 존재하지 않음!
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'    // ❌ 존재하지 않음!
+}
 ```
 
-**문제:** Spring Boot 4.0.0은 존재하지 않습니다! 현재 최신 버전은 3.4.x입니다.
-이로 인해 Gradle 빌드 단계에서 플러그인을 찾을 수 없어 실패합니다.
+**문제:** 위 의존성들은 Maven Central에 존재하지 않습니다!
+- `spring-boot-starter-webmvc` → 올바른 이름: `spring-boot-starter-web`
+- `spring-boot-starter-data-jpa-test` → 존재하지 않음
+- `spring-boot-starter-webmvc-test` → 존재하지 않음, `spring-boot-starter-test` 사용
 
 **해결:**
 ```gradle
-// 수정
-id 'org.springframework.boot' version '3.4.1'
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'  // ✅ 올바른 이름
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'  // ✅ 올바른 이름
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// plain jar 생성 비활성화 (중요!)
+tasks.named('jar') {
+    enabled = false
+}
+```
+
+---
+
+### 2. ❌ Gradle 버전 불일치
+
+**파일:** `backend/gradle/wrapper/gradle-wrapper.properties`
+
+```properties
+# 문제: Gradle 9는 Spring Boot 3.4와 호환성 문제 가능
+distributionUrl=https\://services.gradle.org/distributions/gradle-9.2.1-bin.zip
+```
+
+**해결:**
+```properties
+# Gradle 8.5 사용 (안정적인 버전)
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+```
+
+---
+
+### 3. ❌ Plain JAR 충돌 문제
+
+**문제:** Spring Boot는 기본적으로 두 개의 JAR 파일을 생성합니다:
+- `simpleproject-0.0.1-SNAPSHOT.jar` (실행 가능한 Fat JAR)
+- `simpleproject-0.0.1-SNAPSHOT-plain.jar` (실행 불가능한 일반 JAR)
+
+Dockerfile에서 `COPY --from=builder /app/build/libs/*.jar app.jar` 실행 시 두 파일이 충돌!
+
+**해결:** `build.gradle`에 plain jar 비활성화 추가
+```gradle
+tasks.named('jar') {
+    enabled = false
+}
 ```
 
 ---
