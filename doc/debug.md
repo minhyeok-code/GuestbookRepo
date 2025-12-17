@@ -417,3 +417,17 @@ docker network inspect guestbook_default
 # 포트 확인
 sudo netstat -tlnp | grep 8080
 ```
+
+============cinfig cors 설정
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")  // 모든 경로
+                .allowedOrigins("http://3.26.27.206:3000")  // 프론트 주소
+                .allowedMethods("GET", "POST")
+                .allowCredentials(true);
+    }
+
+localhost:8080 으로 되어 있어서 cors허용을 안해줬던 것......
+
+ㅣㅐ
