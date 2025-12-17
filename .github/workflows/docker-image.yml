@@ -48,5 +48,6 @@ jobs:
             docker pull choiminhyeok/backend-app:latest
             docker pull choiminhyeok/frontend-app:latest
             cd ~/guestbook
+            git pull origin main
             docker compose down
             docker compose up -d
