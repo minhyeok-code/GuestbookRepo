@@ -3,7 +3,7 @@ FROM gradle:8.5-jdk21 AS builder
 WORKDIR /app
 COPY . .
 RUN chmod +x ./gradlew
-RUN ./gradlew build -x test
+RUN ./gradlew build -x test --info
 
 # 2단계: 실행용 이미지
 FROM eclipse-temurin:21-jdk-jammy
