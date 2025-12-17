@@ -324,3 +324,96 @@ FROM eclipse-temurin:21-jdk-jammy
 WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+======= EC2 배포 후 Backend 8080 포트 접속 불가 문제
+
+### 증상
+- `docker compose up -d` 후 프론트엔드(3000)는 정상 접속
+- Backend(8080) 포트는 접속 불가
+- 웹에서 API 호출 시 연결 실패
+
+### 원인 분석
+
+**1. EC2 보안 그룹에서 8080 포트 미개방 (가장 흔한 원인)**
+
+AWS 콘솔 → EC2 → 보안 그룹 → 인바운드 규칙 확인
+
+| 유형 | 프로토콜 | 포트 | 소스 |
+|------|---------|------|------|
+| 사용자 지정 TCP | TCP | 8080 | 0.0.0.0/0 |
+
+**2. Backend 컨테이너 크래시**
+
+MySQL healthcheck 실패로 backend가 시작되지 않을 수 있음.
+
+```bash
+# EC2에서 확인
+docker ps -a                        # 컨테이너 상태 확인
+docker logs guestbook-backend-1     # backend 로그 확인
+docker logs guestbook-mysql-1       # mysql 로그 확인
+```
+
+**3. MySQL healthcheck 문제**
+
+```yaml
+# 문제가 될 수 있는 설정
+healthcheck:
+  test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+```
+
+환경변수 `DB_PASSWORD`가 healthcheck 명령에서 제대로 치환되지 않을 수 있음.
+
+### 해결 방법
+
+**1. EC2 보안 그룹에 8080 포트 추가**
+
+**2. healthcheck 단순화**
+
+```yaml
+healthcheck:
+  test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  interval: 10s
+  timeout: 10s
+  retries: 20
+  start_period: 60s
+```
+
+**3. EC2에서 수동 디버깅**
+
+```bash
+# 모든 컨테이너 중지
+docker compose -f docker-compose.prod.yml down
+
+# 로그 확인하며 시작
+docker compose -f docker-compose.prod.yml up
+
+# 백그라운드로 실행
+docker compose -f docker-compose.prod.yml up -d
+
+# 실시간 로그 확인
+docker compose -f docker-compose.prod.yml logs -f backend
+```
+
+### EC2 디버깅 명령어 모음
+
+```bash
+# 컨테이너 상태
+docker ps -a
+
+# 특정 컨테이너 로그
+docker logs <container_name>
+
+# 실시간 로그
+docker logs -f <container_name>
+
+# 컨테이너 내부 접속
+docker exec -it <container_name> /bin/sh
+
+# 네트워크 확인
+docker network ls
+docker network inspect guestbook_default
+
+# 포트 확인
+sudo netstat -tlnp | grep 8080
+```
