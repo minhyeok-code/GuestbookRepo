@@ -45,8 +45,8 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_KEY }}
           script: |
-            docker pull yourname/backend-app:latest
-            docker pull yourname/frontend-app:latest
+            docker pull choiminhyeok/backend-app:latest
+            docker pull choiminhyeok/frontend-app:latest
             cd ~/guestbook
             docker compose down
             docker compose up -d
