@@ -22,14 +22,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker-compose
-          push: true
-          tags: yourname/your-app:latest
-
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
